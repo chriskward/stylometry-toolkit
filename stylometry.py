@@ -22,7 +22,13 @@ class TextSample():
 
  		self._set_stride(n)
 
- 				# managed / computed attributes are all functions of n?
+ 		print(self.original_text)
+ 		print(self._buffer)
+
+ 		for i in len(self._buffer):
+ 			print(i)
+
+ 		
 
 
 
@@ -32,4 +38,3 @@ class TextSample():
 
  # recompute all the above when n is assigned, reassigned?
 
- 
