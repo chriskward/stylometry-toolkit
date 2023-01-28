@@ -51,13 +51,67 @@ class TextSample():
  	def _get_stride(self):
  		return self._n
 
-
  	# n is a managed attribute. _set_stride() will be called if the value of n is changed
 
  	n = property(fset = _set_stride, fget = _get_stride)
 
 
  	def _ngram_count(self):
- 		pass
 
- 		
+ 		# flatten() returns a copy of self.ngrams with the 2nd dimension removed
+ 		# we're going to successively shrink x as we count ngrams and need to leave
+ 		# self.ngrams unaltered
+
+ 		x = self.ngrams.flatten()
+
+ 		index , counts = list() , list()
+
+ 		while len(x) > 0:
+ 			bool_mask = x==x[0]					# find all occurances of the first n-gram in the sequence of n-grams
+ 			index.append(x[0])					# append this n-gram to the index
+ 			counts.append( np.sum(bool_mask) )	# append the count
+ 			x = x[~bool_mask]					# drop all occurances of this n-gram from the sequence and repeat till seq. is empty
+
+ 		return np.array(index,ndmin=2).T , np.array(counts,ndmin=2).T
+
+
+ 	def __getitem__ (self, index = None):
+
+ 		# permit the instances of the class to be indexed
+ 		# indexing will return elements of the sequence of n-grams
+ 		# displayed in text form rather than unicode (IS THIS THE MOST APPROPRIATE DATA TO RETURN?)
+
+ 		if index == None: return self.ngrams
+ 		else : return self.ngrams[index]
+
+
+ 	def __iter__(self):
+
+ 		# the iterator will also return text rather than unicode
+
+ 		self._index = 0
+ 		return self
+
+
+ 	def __next__(self):
+ 		if self._index < len(self.ngrams):
+ 			x = self.ngrams[self._index]
+ 			self._index += 1
+ 			return x
+
+ 		else: raise StopIteration 
+
+
+ 	def __repr__ (self):
+        x = np.hstack((self.ngrams_unique,self.ngrams_count))
+        y = np.hstack((self.ngrams_unique,self.ngrams_freq))
+        return f'Label = {self.label} \r\r ' + str(x) + '\r\r' + str(y)
+    
+
+    def __str__ (self):
+        return self._original_text
+    
+    
+    def __len__ (self):
+        return len(self.ngrams)
+
