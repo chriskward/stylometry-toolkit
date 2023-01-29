@@ -111,7 +111,72 @@ class TextSample():
     def __str__ (self):
         return self._original_text
     
-    
+
     def __len__ (self):
         return len(self.ngrams)
 
+
+
+
+class TextDataset():
+
+	def __init__ (self, *args, **kwargs):
+
+		if not all(isinstance(x, TextSample) for x in args): raise TypeError("Requires TextSample objects as input")
+		self._dataset = args
+
+		# An instance of the class has two attributes; X, Y 
+		# These are pandas dataframes, X contains relative frequencies/counts of each ngram
+		# and Y the text sample label. The i-the row of X and Y correspond to the i-th Text Sample
+		# The specifics of these data frames depend on a range of attributes that can either be set
+		# at instantiation or adjusted later by calling the TextDataset instance.
+
+		# To avoid code repetition, __init__ calls __call__, passing through the key word arguments
+
+		self.__call__(**kwargs)
+
+
+
+	def __call__(self, **kwargs):
+
+		default_kwargs = {'n':2, 'counts':False , 'common':False, 'most_frequent':None}
+		self.mode = {**default_kwargs, **kwargs}			# if any of the keys are no present, values default_kwargs will not be overwritten
+
+		# set n for each TextSample() in the dataset
+		for x in self._dataset: x.n = self.mode['n']
+
+		# common = False  - we are interested in all ngrams that appear in all TextSamples() e.g. some ngrams may appear only once or only in a single TextSample()
+		# this is the UNION of the sets of ngrams of each TextSample()
+
+		if self.mode['common'] == False: global_index = reduce( np.union1d, [x.ngrams_unique for x in self._dataset] )
+
+		# common = True  - we are only interested in the subset of ngrams that appear at least once in each TextSample() 
+        # this is the INTERSECTION of the sets of ngrams of each TextSample()
+
+        else: global_index = reduce( np.intersect1d, [x.ngrams_unique for x in self._dataset] )
+
+        # do we want X to show counts or relative frequences
+
+        if self.mode['counts'] == True: attribute = 'ngrams_count'
+        else: attribute = 'ngrams_freq'
+
+        global_data , labels = list() , list()
+
+        for x in self._dataset:
+        	sample_data = list()
+        	labels.append(x.label)
+
+        	for y in global_index:
+        		i = np.where(x.ngrams_unique==y)[0]
+        		try: sample_data.append(getattr(x,attribute[i])[0][0])
+        		except: sample_data.append(0)
+
+        	global_data.append(sample_data)
+
+        self.X = pd.DataFrame( data = global_data, columns = global_index)
+        self.Y = pd.DataFrame( data = labels, columns = ['label'])
+
+        if self.mode['most_frequent'] != None:
+            occurances = self.X.sum(axis=0).sort_values(ascending=False)
+            new_index = occurances.nlargest(self.mode['most_frequent']).index
+            self.X = self.X.loc[:,new_index]
