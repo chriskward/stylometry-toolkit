@@ -44,8 +44,11 @@ class TextSample():
 
  		# _ngram_count() method returns a tuple (n_gram index list, count of ngrams)
 
- 		self.ngrams_unique , self.ngrams_count = self._ngram_count()
- 		self.ngrams_freq = self.ngrams_count / np.sum(self.ngrams_count)
+ 		self._index , self._count = self._ngram_count()
+		self._freq = self._count / np.sum(self_count)
+
+ 		self.ngrams_count = pd.Series(index = self._index, data = self._count)
+        self.ngrams_freq = pd.Series(index = self._index, data = self._freq)
 
 
  	def _get_stride(self):
@@ -72,7 +75,7 @@ class TextSample():
  			counts.append( np.sum(bool_mask) )	# append the count
  			x = x[~bool_mask]					# drop all occurances of this n-gram from the sequence and repeat till seq. is empty
 
- 		return np.array(index,ndmin=2).T , np.array(counts,ndmin=2).T
+ 		return np.array(index) , np.array(counts)
 
 
  	def __getitem__ (self, index = None):
@@ -103,8 +106,8 @@ class TextSample():
 
 
  	def __repr__ (self):
-        x = np.hstack((self.ngrams_unique,self.ngrams_count))
-        y = np.hstack((self.ngrams_unique,self.ngrams_freq))
+        x = self.ngrams_count
+        y = self.ngrams_freq
         return f'Label = {self.label} \r\r ' + str(x) + '\r\r' + str(y)
     
 
@@ -148,12 +151,12 @@ class TextDataset():
 		# common = False  - we are interested in all ngrams that appear in all TextSamples() e.g. some ngrams may appear only once or only in a single TextSample()
 		# this is the UNION of the sets of ngrams of each TextSample()
 
-		if self.mode['common'] == False: global_index = reduce( np.union1d, [x.ngrams_unique for x in self._dataset] )
+		if self.mode['common'] == False: global_index = reduce( np.union1d, [x.index for x in self._dataset] )
 
 		# common = True  - we are only interested in the subset of ngrams that appear at least once in each TextSample() 
         # this is the INTERSECTION of the sets of ngrams of each TextSample()
 
-        else: global_index = reduce( np.intersect1d, [x.ngrams_unique for x in self._dataset] )
+        else: global_index = reduce( np.intersect1d, [x.index for x in self._dataset] )
 
         # do we want X to show counts or relative frequences
 
@@ -165,15 +168,10 @@ class TextDataset():
         for x in self._dataset:
         	sample_data = list()
         	labels.append(x.label)
+        	x = getattr(x,attribute).reindex(global_index, fill_value=0)
+        	global_data.append(x)
 
-        	for y in global_index:
-        		i = np.where(x.ngrams_unique==y)[0]
-        		try: sample_data.append(getattr(x,attribute[i])[0][0])
-        		except: sample_data.append(0)
-
-        	global_data.append(sample_data)
-
-        self.X = pd.DataFrame( data = global_data, columns = global_index)
+        self.X = pd.concat(global_data, axis=1).T
         self.Y = pd.DataFrame( data = labels, columns = ['label'])
 
         if self.mode['most_frequent'] != None:
