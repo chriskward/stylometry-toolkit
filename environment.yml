@@ -5,4 +5,5 @@ dependencies:
   - pandas=1.26.0
   - numpy=2.1.1
   - ipykernel
+  - matplotlib
 prefix: C:\Users\cward\anaconda3\envs\stylom
