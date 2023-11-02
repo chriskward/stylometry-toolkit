@@ -7,8 +7,19 @@ from functools import reduce
 
 
 class TextSample():
-
+"""
+Represent a str as a collection of charater n-grams
+Display the relative frequency or counts of n-grams
+and dynamically adjust n
+"""
 	def __init__(self,text,label=0,n=2):
+		"""
+		__init__(text: str , label: int/float , n: int)
+
+		defaults:
+		label = 0
+		n = 2
+		"""
 
 		self.original_text = text
 		self.label = label
@@ -122,8 +133,23 @@ class TextSample():
 
 
 class TextDataset():
+	"""
+	A container object for TextSample objects
+	"""
 
 	def __init__ (self, *args, **kwargs):
+		"""
+		__init__(*args: TextSample, **kwargs)
+
+		kwargs:
+		n: int					set/ajust global value of n(grams) for all TextSample objects
+		counts: bool			True: display of n-grams		False: display relative frequencies
+		most_frequent: int 		display the x most frequent n-grams only (None: display all n-grams)
+
+		defaults: n=2
+		counts: False
+		most_frequent: None
+		"""
 
 		if not all(isinstance(x, TextSample) for x in args): raise TypeError("Requires TextSample objects as input")
 		self._dataset = args
