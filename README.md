@@ -1,7 +1,5 @@
-
 ## Stylometry Toolkit
-### pip install "git+https://github.com/chriskward/stylometry-toolkit.git"
-
+### pip install git+https://github.com/chriskward/stylometry-toolkit
 <br>
 
 The package contains two classes, **TextSample** and **TextDataset** and is compatible with the marjority of scikit-learn
@@ -69,11 +67,3 @@ wholly supported by the numpy documentation so may not work with future versions
 
 ****
 <br>
-
-
-
-
-
-
-
-
